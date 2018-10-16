@@ -9,15 +9,26 @@ import { Movie } from '../movie';
 })
 export class SearchComponent implements OnInit {
   movie: Movie=new Movie();
-  movies:Movie[]=[
-    {"Title":"test","Plot":"test","Year":"test","Genre":"test","Runtime":"test","IsArchived":false}
-  ];
+  movies:Movie[]=[];
+  archived:Movie[]=[];
   searchValue: string;
   searchoption="name";
   showResult=false;
   constructor(private searchService:SearchService) { }
 
   ngOnInit() {
+    this.searchService.getMustWatch().subscribe(
+      res=>{
+          this.movies=res
+      })
+
+    this.searchService.getArchived().subscribe(
+      res=>{
+        this.archived=res
+      }
+    )
+
+    
   }
 
   getMovieByName(title:string):void{
@@ -41,9 +52,28 @@ export class SearchComponent implements OnInit {
 
   addToMustWatch(){
     for(let movie of this.movies){
-      if(movie.Title===this.movie.Title)
+      if(movie.ImdbId===this.movie.ImdbId)
         return;
     }
-    this.movies.push(this.movie);
+    let newMovie=Object.assign({}, this.movie);
+    this.movies.push(newMovie);
+    this.searchService.addToMustWatch(newMovie);
   }
+  addToArchive(movie:Movie){
+    this.searchService.setArchived(movie.ImdbId);
+    this.movies.splice(this.movies.indexOf(movie),1);
+    this.archived.push(movie);
+  }
+
+  setMustWatch(movie:Movie){
+    this.searchService.setMustWatch(movie.ImdbId);
+    this.archived.splice(this.archived.indexOf(movie),1);
+    this.movies.push(movie);
+  }
+  deleteMovie(movie:Movie){
+    this.searchService.delete(movie.ImdbId);
+    this.archived.splice(this.movies.indexOf(movie),1);
+  }
+
+
 }
